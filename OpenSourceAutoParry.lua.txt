@@ -1,0 +1,114 @@
+getgenv().AutoParry = true
+getgenv().CustomDecal = ""
+
+local a1 = game:GetService("Players")
+local a2 = game:GetService("SocialService")
+local a3 = game:GetService("ReplicatedStorage")
+
+local b1 = a1.LocalPlayer
+local b2 = workspace.CurrentCamera
+
+local c1 = false
+local c2 = false
+local c3 = nil
+
+local d1 = nil
+
+local e1 = Instance.new("Part")
+e1.Material = Enum.Material.ForceField
+e1.Anchored = true
+e1.CanCollide = false
+e1.Parent = workspace
+e1.CastShadow = false
+e1.Shape = Enum.PartType.Ball
+e1.Color = Color3.fromRGB(255, 0, 0)
+
+local function applyDecal(part, decalId)
+    local faces = {"Front", "Back", "Top", "Bottom", "Left", "Right"}
+    for _, face in ipairs(faces) do
+        local decal = Instance.new("Decal")
+        decal.Texture = "rbxassetid://" .. decalId
+        decal.Face = Enum.NormalId[face]
+        decal.Parent = part
+    end
+end
+
+if getgenv().CustomDecal then
+    applyDecal(e1, getgenv().CustomDecal)
+end
+
+local function f1()
+    local f2 = b2.CFrame
+    local x, y, z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = f2:GetComponents()
+
+    local g1 = {
+        [1] = 0,
+        [2] = CFrame.new(x, y, z, R00, R01, R02, R10, R11, R12, R20, R21, R22),
+        [3] = {},
+        [4] = {
+            [1] = b2.ViewportSize.X / 2,
+            [2] = b2.ViewportSize.Y / 2
+        },
+        [5] = false
+    }
+
+    d1 = d1 or a2:WaitForChild("\n")
+
+    if d1 then
+        d1:FireServer(unpack(g1))
+    end
+end
+
+local function h1()
+    for _, h2 in pairs(workspace.Balls:GetChildren()) do
+        if h2:GetAttribute("realBall") then
+            return h2
+        end
+    end
+    return nil
+end
+
+while getgenv().AutoParry do
+    task.wait()
+
+    local i1 = b1.Character
+    if not i1 or not i1:FindFirstChild("HumanoidRootPart") then continue end
+
+    local j1 = h1()
+    if not j1 then continue end
+
+    local k1 = i1:FindFirstChild("HumanoidRootPart")
+    local l1 = (k1.Position - j1.Position).Magnitude
+    local m1 = j1.AssemblyLinearVelocity.Magnitude
+
+    local n1 = (k1.Position - j1.Position).Unit
+    local o1 = j1.AssemblyLinearVelocity.Unit
+    local p1 = (o1 - n1).Magnitude / 2
+    local q1 = (m1 * 0.5) * (1.25 + (p1 / 4))
+
+    if j1:GetAttribute("target") ~= b1.Name then
+        c3 = a1:FindFirstChild(j1:GetAttribute("target")) or workspace.Alive:FindFirstChild(j1:GetAttribute("target"))
+        c3 = c3 and c3:IsA("Player") and c3.Character or c3
+    end
+
+    if j1:GetAttribute("target") == b1.Name and not c2 then
+        c1 = false
+    end
+
+    local r1 = c3 and c3:FindFirstChild("HumanoidRootPart") and (k1.Position - c3.HumanoidRootPart.Position).Magnitude or math.huge
+
+    e1.CFrame = k1.CFrame
+    e1.Size = Vector3.new(q1, q1, q1)
+
+    c2 = j1:GetAttribute("target") == b1.Name
+
+    if p1 > 0.525 then continue end
+    if l1 > q1 then continue end
+    if j1:GetAttribute("target") ~= b1.Name then continue end
+    if c1 then continue end
+
+    c1 = m1 > 5.5
+    f1()
+end
+
+e1:Destroy()
